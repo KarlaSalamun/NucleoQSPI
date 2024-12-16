@@ -33,6 +33,7 @@
 /* USER CODE BEGIN PD */
 #define APS6408_READ_REG_CMD           0xEB       /*!< Mode Register Read                  */
 #define APS6408_WRITE_REG_CMD          0x38       /*!< Mode Register Write                 */
+#define READ_ID_CMD			           0x9F       /*!< Mode Register Write                 */
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -136,6 +137,37 @@ void APS6404_write_byte(uint8_t byte) {
 	}
 }
 
+void read_id() {
+	OSPI_RegularCmdTypeDef sCommand;
+	uint8_t id[8];
+
+	sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;
+	sCommand.FlashId = HAL_OSPI_FLASH_ID_1;
+	sCommand.InstructionMode 	= HAL_OSPI_INSTRUCTION_4_LINES;
+	sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;
+	sCommand.InstructionDtrMode = HAL_OSPI_INSTRUCTION_DTR_DISABLE;
+	sCommand.Instruction	 	= READ_ID_CMD;
+	sCommand.DataMode 			= HAL_OSPI_DATA_1_LINE;
+	sCommand.DataDtrMode = HAL_OSPI_DATA_DTR_DISABLE;
+	sCommand.AddressMode 		= HAL_OSPI_ADDRESS_4_LINES;
+	sCommand.AddressSize = HAL_OSPI_ADDRESS_24_BITS;
+	sCommand.AlternateBytesMode	= HAL_OSPI_ALTERNATE_BYTES_NONE;
+	sCommand.DummyCycles		= 24;
+	sCommand.NbData				= sizeof(id);
+	sCommand.SIOOMode			= HAL_OSPI_SIOO_INST_EVERY_CMD;
+	sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;
+
+	if (HAL_OSPI_Command(&hospi1, &sCommand, HAL_OSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
+	{
+		Error_Handler();  // Handle error
+	}
+
+	if (HAL_OSPI_Receive(&hospi1, id, 100) != HAL_OK)
+	{
+		Error_Handler();  // Handle error
+	}
+}
+
 uint8_t APS6404_read_byte() {
 	uint8_t byte;
 	OSPI_RegularCmdTypeDef sCommand = {0};
@@ -153,7 +185,7 @@ uint8_t APS6404_read_byte() {
 	sCommand.AlternateBytesMode = HAL_OSPI_ALTERNATE_BYTES_NONE;
 	sCommand.DataMode = HAL_OSPI_DATA_NONE;
 	sCommand.DataDtrMode = HAL_OSPI_DATA_DTR_DISABLE;
-	sCommand.DummyCycles = 0;
+	sCommand.DummyCycles = 24;
 	//  sCommand.DdrMode = HAL_OSPI_DDR_MODE_DISABLE;
 	sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;
 	sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;
@@ -213,14 +245,16 @@ int main(void)
 //  MX_UCPD1_Init();
 //  MX_USART1_UART_Init();
 //  MX_USB_OTG_FS_PCD_Init();
-  /* USER CODE BEGIN 2 */
+//  /* USER CODE BEGIN 2 */
   uint8_t writeData = 0xA5;
   uint8_t readData;
 
-  APS6404_reset();
+  read_id();
 
-  APS6404_write_byte(writeData);
-  readData = APS6404_read_byte();
+//  APS6404_reset();
+//
+//  APS6404_write_byte(writeData);
+//  readData = APS6404_read_byte();
 
 
   /* USER CODE END 2 */
